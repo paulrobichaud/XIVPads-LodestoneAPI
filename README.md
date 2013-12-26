@@ -2,6 +2,8 @@ XIVPads-LodestoneAPI
 ====================
 An API for parsing lodestone data, designed and maintained by XIVPads.com and XIVDB.com
 
+For an Lodestone RSS Json file, view: https://github.com/viion/XIVPads-LodestoneAPI/blob/master/lodestone_rss.md
+
 **Requirements**
 - PHP 5.4 (Function array dereferencing http://php.net/manual/en/migration54.new-features.php)
 - CURL Enabled on your Server (use phpinfo() to check this)
@@ -16,14 +18,18 @@ An API for parsing lodestone data, designed and maintained by XIVPads.com and XI
 - Character Search
 - Profile Parse
 - Achievement Parse
+- Free Company Search/Parse
+- Linkshell Search/Parse
+- Lodestone news parse
 
-**Todo**
-- Clean up some code
-- Individual Achievement Parse using an Category ID
-- Linkshell Parse
-- Free Company Parse
+**Todo (order of priority)**
+- Clean up some code (24/7!)
+- Lodestone Database Parse
 - Friend Parse
 - Blog Parse
+
+**Thanks:**
+- @stygiansabyss for patch 2.1 free company icon fix
 
 Getting Started
 --------
@@ -99,50 +105,88 @@ $Character = $API->getCharacterByID($IDList[0]);
 **Parse Achievements**
 
 This will take a significant amount of time to complete as it is looping through all achievement 
-categories, I plan to make a standalone function call that can be looped locally.
+categories.
 
 ```php
 // Set an ID
-$ID = 730968;
+$API = new LodestoneAPI();
 
 // Parse achievements
-$API->parseAchievements($ID)
+$API->parseAchievements(730968);
 
-// Show achievements
 Show($API->getAchievements());
 ```
+You can parse a specific category by doing:
+```php
+// Lodestone
+$API = new LodestoneAPI();
+
+// Set category id
+$CategoryID = 2;
+
+// Parse achievement by category
+$API->parseAchievementsByCategory($CategoryID, 730968);
+
+// Get achievements
+Show($API->getAchievements()[$CategoryID]);
+```
+
 
 **Parse Free Company**
 
-Pasrse the memberlist of a free company by the free company id.
+Parse a free company works the same way as characters. The functions to fetch this data allow an config array to be passed with the settings you wish to use. Currently only 1 setting added, this is because the larger free company you parse, the longer it will take and you may wish to not parse members, so by default full member information is not fetched.
+
+***Options***
+- "members" [true, false] - default false.
 
 ```php
-//Example 1:
-//Set CompanyID
-$CompanyID = '9237023573225242655';
+$FreeCompany = $API->getFC(
+[
+	"name" 		=> "call for help", 
+	"server" 	=> "excalibur"
+],
+[
+	"members"	=> true,
+]);
+Show($FreeCompany); // returned object
 
-// Parse Companydata
-$SearchResult = $API->searchFreeCompanyById($CompanyID);
+// echo general info
+echo $FreeCompany->getName();
+echo $FreeCompany->getSlogan();
 
-//Get Companydata
-$GetResult = $API->getSearchFreeCompany();
+// Members List
+Show($FreeCompany->getMembers());
+```
 
-//Show Companydata
-Show($GetResult);
+The options for getFC are optional, the example below will parse free company but not fetch members.
 
+```php
+$FreeCompany = $API->getFC(
+[
+	"name" 		=> "call for help", 
+	"server" 	=> "excalibur"
+]);
+Show($FreeCompany); // returned object
+```
 
-//Example 2:
-//Set CompanyID
-$CompanyID = '9237023573225242655';
+**Parse Linkshell**
 
-// Parse Companymembers
-$SearchResult2 = $API->searchFreeCompanyMembersById($CompanyID);
+Parse a linkshell works the same way as characters/FC. 
 
-//Get Companymembers
-$GetResult2 = $API->getSearchFreeCompanyMembers();
+```php
+$Linkshell = $API->getLS(
+[
+	"name" 		=> "derp squad", 
+	"server" 	=> "excalibur"
+]);
+Show($Linkshell); // returned object
 
-//Show Companymembers
-Show($GetResult2);
+// echo general info
+echo $Linkshell->getName();
+echo $Linkshell->getServer();
+
+// Members List
+Show($Linkshell->getMembers());
 ```
 
 API Methods
@@ -150,19 +194,42 @@ API Methods
 
 **LodestoneAPI**
 ```php
-searchCharacter(name, server, exact[true|false])
+// Quick Get functions
 get(array) (array takes: "name" => "xxx", "server" => "xxx", "id" => "123", ID will take priority)
+getFC(array, config[optional]) (array takes: "name" => "xxx", "server" => "xxx", "id" => "123", ID will take priority)
+getLS(array, config[optional]) (array takes: "name" => "xxx", "server" => "xxx", "id" => "123", ID will take priority)
+Lodestone(array) (array takes: topics => true/false)
+
+// Search functions
+searchCharacter(name, server, exact[true|false])
+searchFreeCompany(name, server, exact[true|false])
+SearchLinkshell(name, server, exact[true|false])
+
+// Get Functions
 getSearch()
-searchFreeCompanyById(CompanyId)
-searchFreeCompanyMembersById(CompanyId)
-getSearchFreeCompany()
-getSearchFreeCompanyMembers()
-getAchievements()
 getCharacters()
 getCharacterByID(id)
+getFreeCompanies()
+getFreeCompanyByID(id)
+getAchievements()
+getLinkshells()
+getLinkshellByID(id)
+
+// Parse
 parseProfile(id)
 parseBiography(id)
-parseAchievements(id)
+parseAchievements()
+parseAchievementsByCategory(cID)
+parseFreeCompany(id, options[optional])
+parseLinkshell(id, options[optiona]) * no options currently
+
+// Error check
+errorPage(id)
+```
+
+**Lodestone**
+```php
+getTopics() // an array containing data related to news topics on the Lodestone.
 ```
 
 **Character**
@@ -192,9 +259,45 @@ getActiveClass()
 getActiveJob()
 getActiveLevel()
 getMinions() // Returns array containing 'Name' and 'Icon'
+getMounts() // Returns array containing 'Name' and 'Icon' (Thanks to @Lucleonhart!)
 getClassJob(class) // Get level/exp info of a class
 isValid() // Wheather character data is valid or not (WIP)
 getErrors() // List of errors found during validation
+```
+
+**Achievements**
+If you parse all achievements via the parseAchievements function, the data below will be an accumlative result. If you use the function parseAchievementsByCategory the results will be specific to that category parsed.
+```PHP
+get() // Gets the list of achievements in the object
+getTotalPoints() // Total points obtainable from parsed result
+getCurrentPoints() // Total points the character has obtained for this parsed result
+getPointsPercentage() // An percentage of the total obtained achievements
+getTotalAchievements() // Total achievements obtainable from parsed result
+getCurrentAchievements() // Total achievements the character has obtained for this parsed result
+```
+
+**FreeCompany**
+```PHP
+getID()
+getLodestone() // the url of the lodestone profile
+getCompany() // maelstrom, twin adder, immortal flames.
+getName()
+getServer()
+getTag()
+getFormed()
+getMemberCount()
+getSlogan()
+getMembers() // array of members containing: id, name, server, rank, rank image, class icon, class level
+```
+
+**Linkshell**
+```PHP
+getID()
+getLodestone() // the url of the lodestone profile
+getName()
+getServer()
+getTotalMembers() // a count
+getMembers() // array of members containing: id, avatar, name, server, rank, class(icon lv), company (icon, name, rank), freecompany (icon, id, name)
 ```
 
 **Stat Types**
