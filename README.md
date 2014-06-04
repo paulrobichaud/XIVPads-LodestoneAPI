@@ -2,7 +2,8 @@ XIVPads-LodestoneAPI
 ====================
 An API for parsing lodestone data, designed and maintained by XIVPads.com and XIVDB.com
 
-For an Lodestone RSS Json file, view: https://github.com/viion/XIVPads-LodestoneAPI/blob/master/lodestone_rss.md
+- For help and code examples on XIVDB's Tooltips, go to: https://github.com/viion/XIVDB-Tooltips
+- For an Lodestone RSS Json file, view: https://github.com/viion/XIVPads-LodestoneAPI/blob/master/lodestone_rss.md
 
 **Requirements**
 - PHP 5.4 (Function array dereferencing http://php.net/manual/en/migration54.new-features.php)
@@ -29,13 +30,21 @@ For an Lodestone RSS Json file, view: https://github.com/viion/XIVPads-Lodestone
 - Blog Parse
 
 **Thanks:**
+- @eedev for (Gear level, ID Lodestone and "Cannot equip gear to" data on the gear array) https://github.com/viion/XIVPads-LodestoneAPI/pull/32
 - @stygiansabyss for patch 2.1 free company icon fix
+
+**License**
+- MIT License : Copyright (c) 2014 Josh Freeman
+- You may: use, redistribute, modify, share, collaborate, change spaces to tabs, so long as the comment license stays intack at the top. IF YOU MAKE MODIFICATIONS please add your contribution details (name/git handle) in the heading comment, example: http://phpjs.org/functions/number_format/
 
 Getting Started
 --------
 The API is heavily object-oriented. It will parse the Lodestone for information and attach this to a 
 entity type object, for example searching a character and parsing the profile will create a character
 object pre-filled with the profile information where you can call traditional "get" functions.
+
+**IMPORTANT**
+Please read this commit: https://github.com/viion/XIVPads-LodestoneAPI/commit/d317664c97ec200d1447da6bcdfe5b730e613127
 
 **Quick Parse**
 ```php
@@ -258,6 +267,7 @@ getSlot() // (List below)
 getActiveClass()
 getActiveJob()
 getActiveLevel()
+getClassJobsOrdered('desc', 'level', 'named'); // Returns class/jobs ordered by an index.
 getMinions() // Returns array containing 'Name' and 'Icon'
 getMounts() // Returns array containing 'Name' and 'Icon' (Thanks to @Lucleonhart!)
 getClassJob(class) // Get level/exp info of a class
